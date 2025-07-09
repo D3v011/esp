@@ -1,120 +1,189 @@
--- Painel com botão fechar e três variações de botões
-local player = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Cria gui principal
-local gui = Instance.new("ScreenGui")
-gui.Name = "AutoGariFarmPainel"
-gui.Parent = player.PlayerGui
+-- Variáveis de controle
+local espOn, noclipOn, invisOn, highJumpOn, speedOn = false, false, false, false, false
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 220)
-frame.Position = UDim2.new(0.5, -130, 0.5, -110)
-frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-frame.BorderSizePixel = 2
-frame.Parent = gui
+-- Função para pegar o humanoide
+local function getHumanoid()
+	local char = LocalPlayer.Character
+	return char and char:FindFirstChildOfClass("Humanoid")
+end
 
--- Botão fechar
-local closeButton = Instance.new("TextButton")
-closeButton.Text = "✕"
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0, 5)
-closeButton.BackgroundColor3 = Color3.fromRGB(160,40,40)
-closeButton.TextColor3 = Color3.new(1,1,1)
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 22
-closeButton.Parent = frame
-closeButton.MouseButton1Click:Connect(function()
-    gui:Destroy()
+-- Transparência do personagem
+local function setTransparencyForCharacter(char, transparency)
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = transparency
+		elseif part:IsA("Decal") then
+			part.Transparency = transparency
+		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+			part.Handle.Transparency = transparency
+		end
+	end
+end
+
+-- Aplicar configurações após respawn
+local function applySettingsToCharacter(char)
+	local hum = char:WaitForChild("Humanoid")
+	hum.JumpPower = highJumpOn and 100 or 50
+	hum.WalkSpeed = speedOn and 40 or 16
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = not noclipOn
+		end
+	end
+	setTransparencyForCharacter(char, invisOn and 1 or 0)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	wait(0.1)
+	applySettingsToCharacter(char)
 end)
 
--- Botão 1: Clássico
-local classicButton = Instance.new("TextButton")
-classicButton.Text = "Iniciar/Parar (Clássico)"
-classicButton.Size = UDim2.new(0, 220, 0, 40)
-classicButton.Position = UDim2.new(0, 20, 0, 45)
-classicButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
-classicButton.TextColor3 = Color3.new(1,1,1)
-classicButton.Font = Enum.Font.SourceSansBold
-classicButton.TextSize = 18
-classicButton.Parent = frame
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "ModMenuRP"
+gui.Parent = pcall(function() return game:GetService("CoreGui") end) and game.CoreGui or LocalPlayer.PlayerGui
 
--- Botão 2: Com borda
-local borderButton = Instance.new("TextButton")
-borderButton.Text = "Iniciar/Parar (Borda)"
-borderButton.Size = UDim2.new(0, 220, 0, 40)
-borderButton.Position = UDim2.new(0, 20, 0, 95)
-borderButton.BackgroundColor3 = Color3.fromRGB(40,40,40)
-borderButton.BorderColor3 = Color3.fromRGB(0, 170, 255)
-borderButton.TextColor3 = Color3.fromRGB(0, 170, 255)
-borderButton.Font = Enum.Font.GothamBold
-borderButton.TextSize = 18
-borderButton.Parent = frame
-local borderUICorner = Instance.new("UICorner", borderButton)
-local borderShadow = Instance.new("UIStroke", borderButton)
-borderShadow.Thickness = 2
-borderShadow.Color = Color3.fromRGB(0,170,255)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 300, 0, 420)
+main.Position = UDim2.new(0.5, -150, 0.5, -210)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+main.BorderSizePixel = 0
+main.Visible = true
 
--- Botão 3: Redondo
-local roundButton = Instance.new("TextButton")
-roundButton.Text = "Iniciar/Parar (Redondo)"
-roundButton.Size = UDim2.new(0, 220, 0, 40)
-roundButton.Position = UDim2.new(0, 20, 0, 145)
-roundButton.BackgroundColor3 = Color3.fromRGB(255,170,0)
-roundButton.TextColor3 = Color3.fromRGB(50,30,0)
-roundButton.Font = Enum.Font.FredokaOne
-roundButton.TextSize = 18
-roundButton.Parent = frame
-local roundUICorner = Instance.new("UICorner", roundButton)
-roundUICorner.CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
--- Status
-local farmStatus = Instance.new("TextLabel")
-farmStatus.Text = "Status: Parado"
-farmStatus.Size = UDim2.new(0, 220, 0, 20)
-farmStatus.Position = UDim2.new(0, 20, 0, 190)
-farmStatus.BackgroundTransparency = 1
-farmStatus.TextColor3 = Color3.fromRGB(200,200,200)
-farmStatus.Font = Enum.Font.Gotham
-farmStatus.TextSize = 14
-farmStatus.TextXAlignment = Enum.TextXAlignment.Left
-farmStatus.Parent = frame
+Instance.new("TextLabel", main) {
+	Size = UDim2.new(1, 0, 0, 35),
+	BackgroundTransparency = 1,
+	Text = "🔥 MOD MENU RP 🔥",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	Font = Enum.Font.GothamBold,
+	TextSize = 16,
+}
 
--- Controles do farm
-local running = false
-local farmThread = nil
+-- Fechar e resetar tudo
+local close = Instance.new("TextButton", main)
+close.Size = UDim2.new(0, 30, 0, 30)
+close.Position = UDim2.new(1, -35, 0, 5)
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(255, 0, 0)
+close.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 14
+close.MouseButton1Click:Connect(function()
+	espOn, noclipOn, invisOn, highJumpOn, speedOn = false, false, false, false, false
+	if LocalPlayer.Character then
+		applySettingsToCharacter(LocalPlayer.Character)
+	end
+	gui:Destroy()
+end)
 
-local function startFarm()
-    if farmThread then return end
-    running = true
-    farmStatus.Text = "Status: Ativo"
-    farmStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
-    -- Exemplo de farm: printa no output, troque pelo seu farm real!
-    farmThread = task.spawn(function()
-        while running do
-            print("Farm rodando...") -- Aqui coloque sua lógica
-            task.wait(1)
-        end
-        farmThread = nil
-    end)
+-- Botões (exemplo: teleporte hospital)
+local function makeButton(y, text, callback)
+	local btn = Instance.new("TextButton", main)
+	btn.Position = UDim2.new(0, 20, 0, y)
+	btn.Size = UDim2.new(0, 260, 0, 35)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 14
+	btn.MouseButton1Click:Connect(callback)
+	return btn
 end
 
-local function stopFarm()
-    running = false
-    farmStatus.Text = "Status: Parado"
-    farmStatus.TextColor3 = Color3.fromRGB(200,200,200)
-end
+makeButton(60, "📍 Teleportar para Hospital", function()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-200, 5, 300)
+	end
+end)
 
-local function toggleFarm()
-    if running then
-        stopFarm()
-    else
-        startFarm()
-    end
-end
+-- ESP
+local espBtn = makeButton(110, "👀 Ativar ESP (NomexCargo)", function()
+	espOn = not espOn
+	espBtn.Text = espOn and "❌ Desativar ESP" or "👀 Ativar ESP (NomexCargo)"
+end)
 
--- Liga/desliga farm em todos os botões
-classicButton.MouseButton1Click:Connect(toggleFarm)
-borderButton.MouseButton1Click:Connect(toggleFarm)
-roundButton.MouseButton1Click:Connect(toggleFarm)
+-- Velocidade
+local speedBtn = makeButton(160, "🏃 Aumentar velocidade", function()
+	speedOn = not speedOn
+	speedBtn.Text = speedOn and "❌ Resetar velocidade" or "🏃 Aumentar velocidade"
+	local hum = getHumanoid()
+	if hum then hum.WalkSpeed = speedOn and 40 or 16 end
+end)
 
--- DICA: troque o print("Farm rodando...") pela sua função de farm real!
+-- Noclip
+local noclipBtn = makeButton(210, "🚶 Ativar Noclip", function()
+	noclipOn = not noclipOn
+	noclipBtn.Text = noclipOn and "❌ Desativar Noclip" or "🚶 Ativar Noclip"
+end)
+
+-- Invisibilidade
+local invisBtn = makeButton(260, "👻 Ativar Invisibilidade", function()
+	invisOn = not invisOn
+	invisBtn.Text = invisOn and "❌ Desativar Invisibilidade" or "👻 Ativar Invisibilidade"
+	if LocalPlayer.Character then setTransparencyForCharacter(LocalPlayer.Character, invisOn and 1 or 0) end
+end)
+
+-- Pulo alto
+local jumpBtn = makeButton(310, "⬆️ Ativar Pulo Alto", function()
+	highJumpOn = not highJumpOn
+	jumpBtn.Text = highJumpOn and "❌ Desativar Pulo Alto" or "⬆️ Ativar Pulo Alto"
+	local hum = getHumanoid()
+	if hum then hum.JumpPower = highJumpOn and 100 or 50 end
+end)
+
+makeButton(360, "🔄 Resetar Personagem", function()
+	if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
+end)
+
+-- Noclip loop contínuo
+RunService.Stepped:Connect(function()
+	if noclipOn and LocalPlayer.Character then
+		for _, part in pairs(LocalPlayer.Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- ESP otimizado
+local espTags = {}
+RunService.RenderStepped:Connect(function()
+	if not espOn then
+		for p, tag in pairs(espTags) do
+			if tag and tag.Parent then tag:Destroy() end
+			espTags[p] = nil
+		end
+	else
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Team then
+				if not espTags[p] then
+					local guiTag = Instance.new("BillboardGui", p.Character.Head)
+					guiTag.Name = "TeamESP"
+					guiTag.Size = UDim2.new(0, 100, 0, 30)
+					guiTag.StudsOffset = Vector3.new(0, 2, 0)
+					guiTag.AlwaysOnTop = true
+					local label = Instance.new("TextLabel", guiTag)
+					label.Size = UDim2.new(1, 0, 1, 0)
+					label.BackgroundTransparency = 1
+					label.TextColor3 = Color3.fromRGB(0, 255, 255)
+					label.Font = Enum.Font.GothamBold
+					label.TextSize = 14
+					label.Text = p.Name .. " [" .. p.Team.Name .. "]"
+					espTags[p] = guiTag
+				end
+			elseif espTags[p] then
+				if espTags[p].Parent then espTags[p]:Destroy() end
+				espTags[p] = nil
+			end
+		end
+	end
+end)
