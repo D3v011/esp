@@ -4,6 +4,67 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
+-- Variáveis para controle dos modos
+local espOn = false
+local noclipOn = false
+local invisOn = false
+local highJumpOn = false
+local speedOn = false
+
+-- Função para pegar o humanoide do personagem atual
+local function getHumanoid()
+	local char = LocalPlayer.Character
+	if char then
+		return char:FindFirstChildOfClass("Humanoid")
+	end
+	return nil
+end
+
+-- Função para definir transparência no personagem (corpo, acessórios, roupas)
+local function setTransparencyForCharacter(char, transparency)
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = transparency
+		elseif part:IsA("Decal") then
+			part.Transparency = transparency
+		elseif part:IsA("Accessory") then
+			if part.Handle then
+				part.Handle.Transparency = transparency
+			end
+		elseif part:IsA("Clothing") then
+			part.Transparency = transparency
+		end
+	end
+end
+
+-- Aplica configurações ao personagem (usado após respawn)
+local function applySettingsToCharacter(char)
+	local hum = char:WaitForChild("Humanoid")
+
+	-- Jump power
+	hum.JumpPower = highJumpOn and 100 or 50
+
+	-- Walk speed
+	hum.WalkSpeed = speedOn and 40 or 16
+
+	-- Noclip
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = not noclipOn
+		end
+	end
+
+	-- Invisibilidade
+	setTransparencyForCharacter(char, invisOn and 1 or 0)
+end
+
+-- Conectar no evento CharacterAdded para reaplicar configurações
+LocalPlayer.CharacterAdded:Connect(function(char)
+	-- Pequeno delay para garantir que o personagem esteja pronto
+	wait(0.1)
+	applySettingsToCharacter(char)
+end)
+
 -- Cria GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "ModMenuRP"
@@ -55,7 +116,6 @@ teleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ESP toggle
-local espOn = false
 local espBtn = Instance.new("TextButton", main)
 espBtn.Position = UDim2.new(0, 20, 0, 110)
 espBtn.Size = UDim2.new(0, 260, 0, 35)
@@ -71,12 +131,16 @@ espBtn.MouseButton1Click:Connect(function()
 	espOn = not espOn
 	espBtn.Text = espOn and "❌ Desativar ESP" or "👀 Ativar ESP (NomexCargo)"
 	if not espOn then
-		for _, tag in pairs(espTags) do if tag and tag.Parent then tag:Destroy() end end
+		for _, tag in pairs(espTags) do
+			if tag and tag.Parent then
+				tag:Destroy()
+			end
+		end
 		espTags = {}
 	end
 end)
 
--- Velocidade
+-- Velocidade toggle
 local speedBtn = Instance.new("TextButton", main)
 speedBtn.Position = UDim2.new(0, 20, 0, 160)
 speedBtn.Size = UDim2.new(0, 260, 0, 35)
@@ -87,14 +151,16 @@ speedBtn.Font = Enum.Font.Gotham
 speedBtn.TextSize = 14
 
 speedBtn.MouseButton1Click:Connect(function()
-	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	speedOn = not speedOn
+	speedBtn.Text = speedOn and "❌ Resetar velocidade" or "🏃 Aumentar velocidade"
+
+	local hum = getHumanoid()
 	if hum then
-		hum.WalkSpeed = 40
+		hum.WalkSpeed = speedOn and 40 or 16
 	end
 end)
 
 -- Noclip toggle
-local noclipOn = false
 local noclipBtn = Instance.new("TextButton", main)
 noclipBtn.Position = UDim2.new(0, 20, 0, 210)
 noclipBtn.Size = UDim2.new(0, 260, 0, 35)
@@ -107,26 +173,17 @@ noclipBtn.TextSize = 14
 noclipBtn.MouseButton1Click:Connect(function()
 	noclipOn = not noclipOn
 	noclipBtn.Text = noclipOn and "❌ Desativar Noclip" or "🚶 Ativar Noclip"
-end)
 
-RunService.Stepped:Connect(function()
-	if noclipOn and LocalPlayer.Character then
+	if LocalPlayer.Character then
 		for _, part in pairs(LocalPlayer.Character:GetChildren()) do
 			if part:IsA("BasePart") then
-				part.CanCollide = false
-			end
-		end
-	elseif LocalPlayer.Character then
-		for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = true
+				part.CanCollide = not noclipOn
 			end
 		end
 	end
 end)
 
 -- Invisibilidade toggle
-local invisOn = false
 local invisBtn = Instance.new("TextButton", main)
 invisBtn.Position = UDim2.new(0, 20, 0, 260)
 invisBtn.Size = UDim2.new(0, 260, 0, 35)
@@ -140,19 +197,11 @@ invisBtn.MouseButton1Click:Connect(function()
 	invisOn = not invisOn
 	invisBtn.Text = invisOn and "❌ Desativar Invisibilidade" or "👻 Ativar Invisibilidade"
 	if LocalPlayer.Character then
-		for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-			if part:IsA("BasePart") or part:IsA("Decal") then
-				part.Transparency = invisOn and 1 or 0
-			end
-			if part:IsA("BasePart") and part.Name == "HumanoidRootPart" then
-				part.Transparency = invisOn and 1 or 0
-			end
-		end
+		setTransparencyForCharacter(LocalPlayer.Character, invisOn and 1 or 0)
 	end
 end)
 
 -- Pular alto toggle
-local highJumpOn = false
 local jumpBtn = Instance.new("TextButton", main)
 jumpBtn.Position = UDim2.new(0, 20, 0, 310)
 jumpBtn.Size = UDim2.new(0, 260, 0, 35)
@@ -165,11 +214,10 @@ jumpBtn.TextSize = 14
 jumpBtn.MouseButton1Click:Connect(function()
 	highJumpOn = not highJumpOn
 	jumpBtn.Text = highJumpOn and "❌ Desativar Pulo Alto" or "⬆️ Ativar Pulo Alto"
-	if LocalPlayer.Character then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.JumpPower = highJumpOn and 100 or 50
-		end
+
+	local hum = getHumanoid()
+	if hum then
+		hum.JumpPower = highJumpOn and 100 or 50
 	end
 end)
 
