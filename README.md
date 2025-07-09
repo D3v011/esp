@@ -1,4 +1,4 @@
--- GUI básica
+-- GUI simples
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local FarmButton = Instance.new("TextButton")
@@ -10,20 +10,34 @@ Frame.Position = UDim2.new(0.5, -100, 0.7, -50)
 Frame.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
 Frame.Parent = ScreenGui
 
-FarmButton.Text = "INICIAR FARM GARI"
+FarmButton.Text = "INICIAR AUTO GARI"
 FarmButton.Size = UDim2.new(0, 180, 0, 60)
 FarmButton.Position = UDim2.new(0, 10, 0, 20)
 FarmButton.BackgroundColor3 = Color3.new(0,1,0)
 FarmButton.TextColor3 = Color3.new(1,1,1)
 FarmButton.Parent = Frame
 
--- Função para buscar objetos com nomes parecidos
-local function findObjectByName(keywords)
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") or obj:IsA("Model") then
-            for _, word in ipairs(keywords) do
-                if string.lower(obj.Name):find(word) then
-                    return obj
+-- Função para simular pressionar F
+local function pressF()
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+    wait(0.1)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+end
+
+-- Função para encontrar botão pelo texto
+local function findButtonByText(text)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj:FindFirstChildWhichIsA("BillboardGui") then
+            for _, gui in ipairs(obj:GetChildren()) do
+                if gui:IsA("BillboardGui") then
+                    for _, guiObj in ipairs(gui:GetDescendants()) do
+                        if guiObj:IsA("TextLabel") or guiObj:IsA("TextButton") then
+                            if guiObj.Text and string.lower(guiObj.Text):find(string.lower(text)) then
+                                return obj
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -31,47 +45,39 @@ local function findObjectByName(keywords)
     return nil
 end
 
--- Função principal de farm
 function farmGari()
     local player = game.Players.LocalPlayer
     local char = player.Character or player.CharacterAdded:Wait()
-    -- Procurar objetos prováveis de lixo e lixeira
-    local lixoKeywords = {"lixo", "garbage", "trash", "bag", "saco"}
-    local lixeiraKeywords = {"lixeira", "bin", "trashcan", "coletor"}
+    local hrp = char:WaitForChild("HumanoidRootPart")
     while running do
-        local lixo = findObjectByName(lixoKeywords)
-        local lixeira = findObjectByName(lixeiraKeywords)
-        if lixo and lixeira then
-            -- Ir até o lixo
-            char:MoveTo(lixo.Position or lixo.PrimaryPart.Position)
-            repeat wait(0.1) until (char.PrimaryPart.Position - (lixo.Position or lixo.PrimaryPart.Position)).magnitude < 5 or not running
-            pcall(function()
-                firetouchinterest(char.PrimaryPart, lixo, 0)
-            end)
-            wait(0.3)
-            -- Ir até a lixeira
-            char:MoveTo(lixeira.Position or lixeira.PrimaryPart.Position)
-            repeat wait(0.1) until (char.PrimaryPart.Position - (lixeira.Position or lixeira.PrimaryPart.Position)).magnitude < 5 or not running
-            pcall(function()
-                firetouchinterest(char.PrimaryPart, lixeira, 0)
-            end)
-            wait(1)
-        else
-            warn("Não encontrou lixo ou lixeira!")
-            wait(2)
+        -- Procurar Saco de Lixo
+        local lixo = findButtonByText("Saco de lixo")
+        if lixo and running then
+            hrp.CFrame = CFrame.new(lixo.Position + Vector3.new(0,2,0))
+            wait(0.5)
+            pressF()
+            wait(0.7)
         end
+        -- Procurar Caminhão
+        local caminhao = findButtonByText("Caminhão")
+        if caminhao and running then
+            hrp.CFrame = CFrame.new(caminhao.Position + Vector3.new(0,2,0))
+            wait(0.5)
+            pressF()
+            wait(1)
+        end
+        wait(0.5)
     end
 end
 
--- Botão de ativação/desativação
 FarmButton.MouseButton1Click:Connect(function()
     running = not running
     if running then
-        FarmButton.Text = "PARAR FARM"
+        FarmButton.Text = "PARAR AUTO GARI"
         FarmButton.BackgroundColor3 = Color3.new(1,0,0)
         farmGari()
     else
-        FarmButton.Text = "INICIAR FARM GARI"
+        FarmButton.Text = "INICIAR AUTO GARI"
         FarmButton.BackgroundColor3 = Color3.new(0,1,0)
     end
 end)
