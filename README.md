@@ -1,8 +1,9 @@
--- Painel Mod Menu RP (Somente funções de Velocidade e ESP) por ChatGPT
+-- Painel Mod Menu RP (Funções de Velocidade e ESP, Arrastável) por ChatGPT
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Cria GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
@@ -14,6 +15,7 @@ main.Position = UDim2.new(0.5, -150, 0.5, -100)
 main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 main.BorderSizePixel = 0
 main.Visible = true
+main.Active = true -- Torna o frame interativo para drag
 
 local UICorner = Instance.new("UICorner", main)
 UICorner.CornerRadius = UDim.new(0, 10)
@@ -105,3 +107,42 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
+-- Drag funcionalidade
+do
+	local dragging, dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+
+	main.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = main.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	main.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+end
