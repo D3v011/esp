@@ -1,38 +1,60 @@
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
-local webhookURL = "https://discord.com/api/webhooks/1392368864742080593/b9mxhC30aUABMleHw0fPkD_3Z9LXQYL6Q_wdz4ez8QNjLW-3qkFLQVKignskpNvY1wmx"
-
-local function sendToWebhook(content)
-    local data = {
-        ["content"] = content
-    }
-    local jsonData = HttpService:JSONEncode(data)
-    local success, err = pcall(function()
-        HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
-    end)
-    if not success then
-        warn("Erro ao enviar webhook: ".. tostring(err))
+print("===== SCAN DE JOGADORES E TIMES =====")
+for _, player in pairs(Players:GetPlayers()) do
+    print("Jogador: "..player.Name)
+    if player.Team then
+        print("  Time: "..player.Team.Name)
+    else
+        print("  Sem time")
+    end
+    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        print(string.format("  Health: %.0f / %.0f", humanoid.Health, humanoid.MaxHealth))
     end
 end
 
-local function scanPlayers()
-    local msg = "**Lista de jogadores no jogo:**\n"
-    for _, player in pairs(Players:GetPlayers()) do
-        msg = msg .. "- ".. player.Name
-        if player.Team then
-            msg = msg .. " (Time: ".. player.Team.Name ..")"
-        else
-            msg = msg .. " (Sem time)"
+print("\n===== ITENS NA MOCHILA DOS JOGADORES =====")
+for _, player in pairs(Players:GetPlayers()) do
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        print("Player: "..player.Name)
+        for _, tool in pairs(backpack:GetChildren()) do
+            print("  - "..tool.Name.." ("..tool.ClassName..")")
         end
-        msg = msg .. "\n"
+    else
+        print("Player: "..player.Name.." não tem mochila")
     end
-    return msg
 end
 
-local function main()
-    local content = scanPlayers()
-    sendToWebhook(content)
+print("\n===== OBJETOS NO WORKSPACE =====")
+local count = 0
+for _, obj in pairs(Workspace:GetChildren()) do
+    count = count + 1
+    print(obj.Name.." ("..obj.ClassName..")")
+    if count >= 30 then
+        print("Mostrando só os primeiros 30 objetos para não lotar o console.")
+        break
+    end
 end
 
-main()
+print("\n===== DISTÂNCIA DOS JOGADORES =====")
+local lpPos = nil
+if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    lpPos = LocalPlayer.Character.HumanoidRootPart.Position
+end
+
+if lpPos then
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (player.Character.HumanoidRootPart.Position - lpPos).Magnitude
+            print(string.format("%s está a %.2f metros", player.Name, dist))
+        end
+    end
+else
+    print("Não foi possível obter posição do seu personagem.")
+end
+
+print("\n===== FIM DO SCAN =====")
