@@ -1,11 +1,11 @@
--- Este script simula um exploit tentando kikar outro jogador
--- NÃO use isso em servidores públicos — só para testes com seu anti-cheat
+-- Script de exploit para testes (NÃO use publicamente)
+-- Simula um hacker matando outro jogador
 
 local Players = game:GetService("Players")
-local TargetName = "JogadorAlvo" -- Nome da vítima
+local TargetName = "JogadorAlvo" -- Nome do jogador que você quer "matar"
 
-local Target = Players:FindFirstChild(TargetName)
+local target = Players:FindFirstChild(TargetName)
 
-if Target then
-    Target:Kick("Você foi expulso por um exploit.")
+if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+    target.Character.Humanoid.Health = 0
 end
