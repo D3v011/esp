@@ -1,130 +1,126 @@
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
 
--- Criar GUI para mostrar ESP em cada jogador
-local function criarESP(player)
-    if player == LocalPlayer then return end
-    local char = player.Character
-    if not char or not char:FindFirstChild("Head") then return end
-
-    if char.Head:FindFirstChild("ESPLabel") then return end
-
-    local billboard = Instance.new("BillboardGui", char.Head)
-    billboard.Name = "ESPLabel"
-    billboard.Size = UDim2.new(0, 150, 0, 40)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-    billboard.AlwaysOnTop = true
-
-    local label = Instance.new("TextLabel", billboard)
-    label.Name = "NameLabel"
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(0, 255, 255)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 14
-    label.TextStrokeTransparency = 0.5
-    label.Text = player.Name
-
-    -- Mostra time/cargo junto ao nome
-    if player.Team then
-        label.Text = player.Name .. " [" .. player.Team.Name .. "]"
-    end
-end
-
--- Atualizar ESP para todos os jogadores
-local function atualizarESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        criarESP(player)
-    end
-end
-
--- Teleporte para hospital (exemplo)
-local function teleportarHospital()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(-200, 5, 300) -- troque pelas coords do hospital no seu RP
-    end
-end
-
--- Criar menu simples para teleporte e desligar ESP
+-- Criação da GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "ModMenuRP"
+gui.Name = "ScannerLeveGUI"
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 220, 0, 120)
-frame.Position = UDim2.new(0.8, 0, 0.3, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Size = UDim2.new(0, 450, 0, 400)
+frame.Position = UDim2.new(0.5, -225, 0.5, -200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.BorderSizePixel = 0
-
-local UICorner = Instance.new("UICorner", frame)
-UICorner.CornerRadius = UDim.new(0, 8)
+frame.Active = true
+frame.Draggable = true
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
-title.Text = "Mod Menu RP"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "🕵️ Scanner Leve de Dados"
+title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 18
 
-local btnTeleport = Instance.new("TextButton", frame)
-btnTeleport.Position = UDim2.new(0.1, 0, 0.35, 0)
-btnTeleport.Size = UDim2.new(0.8, 0, 0, 30)
-btnTeleport.Text = "Teleportar para Hospital"
-btnTeleport.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-btnTeleport.TextColor3 = Color3.fromRGB(200, 200, 255)
-btnTeleport.Font = Enum.Font.Gotham
-btnTeleport.TextSize = 14
-btnTeleport.MouseButton1Click:Connect(teleportarHospital)
+local output = Instance.new("ScrollingFrame", frame)
+output.Size = UDim2.new(1, -20, 1, -50)
+output.Position = UDim2.new(0, 10, 0, 40)
+output.BackgroundColor3 = Color3.fromRGB(20,20,20)
+output.BorderSizePixel = 0
+output.CanvasSize = UDim2.new(0, 0, 0, 0)
+output.ScrollBarThickness = 6
 
-local btnToggleESP = Instance.new("TextButton", frame)
-btnToggleESP.Position = UDim2.new(0.1, 0, 0.7, 0)
-btnToggleESP.Size = UDim2.new(0.8, 0, 0, 30)
-btnToggleESP.Text = "Ativar ESP"
-btnToggleESP.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-btnToggleESP.TextColor3 = Color3.fromRGB(200, 200, 255)
-btnToggleESP.Font = Enum.Font.Gotham
-btnToggleESP.TextSize = 14
+local layout = Instance.new("UIListLayout", output)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 4)
 
-local espAtivo = false
-btnToggleESP.MouseButton1Click:Connect(function()
-    espAtivo = not espAtivo
-    btnToggleESP.Text = espAtivo and "Desativar ESP" or "Ativar ESP"
-    if not espAtivo then
-        for _, player in pairs(Players:GetPlayers()) do
-            local char = player.Character
-            if char and char:FindFirstChild("Head") then
-                local espLabel = char.Head:FindFirstChild("ESPLabel")
-                if espLabel then
-                    espLabel:Destroy()
-                end
-            end
-        end
-    else
-        atualizarESP()
-    end
-end)
+local function addText(text, color)
+	local label = Instance.new("TextLabel", output)
+	label.Size = UDim2.new(1, -10, 0, 20)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = color or Color3.fromRGB(200, 200, 200)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Text = text
+	return label
+end
 
--- Atualiza ESP sempre que um personagem aparece
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        if espAtivo then
-            criarESP(player)
-        end
-    end)
-end)
+output:ClearAllChildren()
+addText("Iniciando scan leve do jogo...", Color3.fromRGB(100, 255, 100))
 
-Players.PlayerRemoving:Connect(function(player)
-    local char = player.Character
-    if char and char:FindFirstChild("Head") then
-        local espLabel = char.Head:FindFirstChild("ESPLabel")
-        if espLabel then
-            espLabel:Destroy()
-        end
-    end
-end)
+local function updateCanvas()
+	local totalHeight = 0
+	for _, child in pairs(output:GetChildren()) do
+		if child:IsA("TextLabel") then
+			totalHeight = totalHeight + child.Size.Y.Offset + layout.Padding.Offset
+		end
+	end
+	output.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+end
 
-print("Script do Mod Menu RP rodando. Use o menu na tela para controlar.")
-
+-- Use coroutine para distribuir as operações e evitar travar
+coroutine.wrap(function()
+	addText("== Jogadores e Times ==")
+	updateCanvas()
+	wait(0.2)
+	for _, player in pairs(Players:GetPlayers()) do
+		addText("Jogador: " .. player.Name, Color3.fromRGB(255,255,0))
+		updateCanvas()
+		wait(0.05)
+		if player.Team then
+			addText("  Time: " .. player.Team.Name)
+		else
+			addText("  Sem time")
+		end
+		updateCanvas()
+		wait(0.05)
+	end
+	
+	wait(0.3)
+	addText("\n== Ferramentas na mochila ==")
+	updateCanvas()
+	wait(0.2)
+	for _, player in pairs(Players:GetPlayers()) do
+		local backpack = player:FindFirstChild("Backpack")
+		if backpack then
+			local items = backpack:GetChildren()
+			addText("Player: " .. player.Name .. " tem " .. tostring(#items) .. " ferramentas")
+		else
+			addText("Player: " .. player.Name .. " não tem mochila")
+		end
+		updateCanvas()
+		wait(0.05)
+	end
+	
+	wait(0.3)
+	addText("\n== Objetos no Workspace ==")
+	updateCanvas()
+	wait(0.2)
+	local children = Workspace:GetChildren()
+	local limit = math.min(#children, 30) -- Limita a 30 objetos para evitar travar
+	for i=1, limit do
+		local obj = children[i]
+		addText("Objeto: " .. obj.Name .. " | Tipo: " .. obj.ClassName)
+		updateCanvas()
+		wait(0.03)
+	end
+	
+	wait(0.3)
+	addText("\n== Distâncias dos jogadores ==")
+	updateCanvas()
+	wait(0.2)
+	local lpPos
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		lpPos = LocalPlayer.Character.HumanoidRootPart.Position
+	end
+	for _, player in pairs(Players:GetPlayers()) do
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and lpPos then
+			local dist = (player.Character.HumanoidRootPart.Position - lpPos).Magnitude
+			addText(player.Name .. " está a " .. string.format("%.1f", dist) .. " metros")
+			updateCanvas()
+			wait(0.05)
+		end
+	end
+end)()
