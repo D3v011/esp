@@ -1,60 +1,120 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
-local ESP_On = true
+
+local ESP_On = false
 local TeamCheck = true
-local boxes = {}
+local ESP_Boxes = {}
 
-function criarBox(p)
-    if p == LocalPlayer then return end
-    local t = Drawing.new("Text")
-    t.Size = 14
-    t.Center = true
-    t.Outline = true
-    t.Visible = false
-    t.Color = Color3.fromRGB(255,255,255)
-    boxes[p] = t
+-- Cria GUI na tela
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "ESP_UI"
+
+local frame = Instance.new("Frame", ScreenGui)
+frame.Position = UDim2.new(0, 10, 0, 100)
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.2
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "ESP Painel"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+
+local toggleESP = Instance.new("TextButton", frame)
+toggleESP.Position = UDim2.new(0, 10, 0, 40)
+toggleESP.Size = UDim2.new(1, -20, 0, 30)
+toggleESP.Text = "Ativar ESP"
+toggleESP.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleESP.TextColor3 = Color3.fromRGB(255,255,255)
+toggleESP.Font = Enum.Font.Gotham
+toggleESP.TextSize = 14
+
+local toggleTeam = Instance.new("TextButton", frame)
+toggleTeam.Position = UDim2.new(0, 10, 0, 80)
+toggleTeam.Size = UDim2.new(1, -20, 0, 30)
+toggleTeam.Text = "Team Check: ON"
+toggleTeam.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleTeam.TextColor3 = Color3.fromRGB(255,255,255)
+toggleTeam.Font = Enum.Font.Gotham
+toggleTeam.TextSize = 14
+
+-- Função para criar ESP
+function criarESP(player)
+    if player == LocalPlayer then return end
+
+    local esp = Drawing.new("Text")
+    esp.Size = 14
+    esp.Center = true
+    esp.Outline = true
+    esp.Visible = false
+    esp.Color = Color3.fromRGB(255, 255, 255)
+
+    ESP_Boxes[player] = esp
 end
 
-function removerBox(p)
-    if boxes[p] then boxes[p]:Remove() boxes[p] = nil end
+-- Remover ESP
+function removerESP(player)
+    if ESP_Boxes[player] then
+        ESP_Boxes[player]:Remove()
+        ESP_Boxes[player] = nil
+    end
 end
 
-for _,p in pairs(Players:GetPlayers()) do criarBox(p) end
-Players.PlayerAdded:Connect(criarBox)
-Players.PlayerRemoving:Connect(removerBox)
-
+-- Atualiza ESP
 RunService.RenderStepped:Connect(function()
-    if not ESP_On then return end
-    for i,v in pairs(Players:GetPlayers()) do
-        local c = v.Character and v.Character:FindFirstChild("HumanoidRootPart")
-        local box = boxes[v]
-        if c and box then
-            if TeamCheck and v.Team == LocalPlayer.Team then
-                box.Visible = false
+    if not ESP_On then
+        for _, box in pairs(ESP_Boxes) do
+            box.Visible = false
+        end
+        return
+    end
+
+    for _, player in pairs(Players:GetPlayers()) do
+        local char = player.Character
+        local esp = ESP_Boxes[player]
+
+        if char and esp and char:FindFirstChild("HumanoidRootPart") then
+            if TeamCheck and player.Team == LocalPlayer.Team then
+                esp.Visible = false
             else
-                local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(c.Position)
-                if onScreen then
-                    box.Position = Vector2.new(pos.X, pos.Y)
-                    box.Text = v.Name
-                    box.Visible = true
-                else
-                    box.Visible = false
-                end
+                local pos, vis = workspace.CurrentCamera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                esp.Position = Vector2.new(pos.X, pos.Y)
+                esp.Text = player.Name
+                esp.Visible = vis
             end
+        elseif esp then
+            esp.Visible = false
         end
     end
 end)
 
-print("ESP ativado com sucesso. Pressione F1 para ligar/desligar e F2 para o Team Check.")
-
-game:GetService("UserInputService").InputBegan:Connect(function(i,g)
-    if g then return end
-    if i.KeyCode == Enum.KeyCode.F1 then
-        ESP_On = not ESP_On
-        print("ESP: ", ESP_On)
-    elseif i.KeyCode == Enum.KeyCode.F2 then
-        TeamCheck = not TeamCheck
-        print("TeamCheck: ", TeamCheck)
-    end
+-- Botões da GUI
+toggleESP.MouseButton1Click:Connect(function()
+    ESP_On = not ESP_On
+    toggleESP.Text = ESP_On and "Desativar ESP" or "Ativar ESP"
 end)
+
+toggleTeam.MouseButton1Click:Connect(function()
+    TeamCheck = not TeamCheck
+    toggleTeam.Text = TeamCheck and "Team Check: ON" or "Team Check: OFF"
+end)
+
+-- Inicializa ESP
+for _, player in pairs(Players:GetPlayers()) do
+    criarESP(player)
+end
+
+Players.PlayerAdded:Connect(criarESP)
+Players.PlayerRemoving:Connect(removerESP)
+
+StarterGui:SetCore("SendNotification", {
+    Title = "ESP GUI",
+    Text = "Interface ativada!",
+    Duration = 5
+})
