@@ -1,4 +1,3 @@
--- ESP Simples com Team Check para Delta
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -47,7 +46,8 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Hotkeys para ativar/desativar ESP e TeamCheck
+print("ESP ativado com sucesso. Pressione F1 para ligar/desligar e F2 para o Team Check.")
+
 game:GetService("UserInputService").InputBegan:Connect(function(i,g)
     if g then return end
     if i.KeyCode == Enum.KeyCode.F1 then
