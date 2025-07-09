@@ -1,189 +1,84 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
--- Variáveis de controle
-local espOn, noclipOn, invisOn, highJumpOn, speedOn = false, false, false, false, false
-
--- Função para pegar o humanoide
-local function getHumanoid()
-	local char = LocalPlayer.Character
-	return char and char:FindFirstChildOfClass("Humanoid")
-end
-
--- Transparência do personagem
-local function setTransparencyForCharacter(char, transparency)
-	for _, part in pairs(char:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.Transparency = transparency
-		elseif part:IsA("Decal") then
-			part.Transparency = transparency
-		elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-			part.Handle.Transparency = transparency
-		end
-	end
-end
-
--- Aplicar configurações após respawn
-local function applySettingsToCharacter(char)
-	local hum = char:WaitForChild("Humanoid")
-	hum.JumpPower = highJumpOn and 100 or 50
-	hum.WalkSpeed = speedOn and 40 or 16
-	for _, part in pairs(char:GetChildren()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = not noclipOn
-		end
-	end
-	setTransparencyForCharacter(char, invisOn and 1 or 0)
-end
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-	wait(0.1)
-	applySettingsToCharacter(char)
-end)
-
--- GUI
+-- Criação da GUI principal
 local gui = Instance.new("ScreenGui")
-gui.Name = "ModMenuRP"
-gui.Parent = pcall(function() return game:GetService("CoreGui") end) and game.CoreGui or LocalPlayer.PlayerGui
+gui.Name = "PainelModMenu"
+gui.Parent = LocalPlayer.PlayerGui
 
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 300, 0, 420)
-main.Position = UDim2.new(0.5, -150, 0.5, -210)
-main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-main.BorderSizePixel = 0
-main.Visible = true
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 180)
+frame.Position = UDim2.new(0.5, -150, 0.5, -90)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Parent = gui
 
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = frame
 
-Instance.new("TextLabel", main) {
-	Size = UDim2.new(1, 0, 0, 35),
-	BackgroundTransparency = 1,
-	Text = "🔥 MOD MENU RP 🔥",
-	TextColor3 = Color3.fromRGB(255, 255, 255),
-	Font = Enum.Font.GothamBold,
-	TextSize = 16,
-}
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "🔥 MOD MENU COMPLETO 🔥"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
 
--- Fechar e resetar tudo
-local close = Instance.new("TextButton", main)
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -35, 0, 5)
-close.Text = "X"
-close.TextColor3 = Color3.fromRGB(255, 0, 0)
-close.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-close.Font = Enum.Font.GothamBold
-close.TextSize = 14
-close.MouseButton1Click:Connect(function()
-	espOn, noclipOn, invisOn, highJumpOn, speedOn = false, false, false, false, false
-	if LocalPlayer.Character then
-		applySettingsToCharacter(LocalPlayer.Character)
-	end
-	gui:Destroy()
+-- Botão fechar
+local closeButton = Instance.new("TextButton")
+closeButton.Parent = frame
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.Text = "✕"
+closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 18
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
 end)
 
--- Botões (exemplo: teleporte hospital)
-local function makeButton(y, text, callback)
-	local btn = Instance.new("TextButton", main)
-	btn.Position = UDim2.new(0, 20, 0, y)
-	btn.Size = UDim2.new(0, 260, 0, 35)
-	btn.Text = text
-	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.Gotham
-	btn.TextSize = 14
-	btn.MouseButton1Click:Connect(callback)
-	return btn
-end
+-- Botão de velocidade
+local speedBtn = Instance.new("TextButton")
+speedBtn.Parent = frame
+speedBtn.Position = UDim2.new(0, 20, 0, 60)
+speedBtn.Size = UDim2.new(0, 260, 0, 40)
+speedBtn.Text = "Ativar velocidade"
+speedBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+speedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedBtn.Font = Enum.Font.Gotham
+speedBtn.TextSize = 16
 
-makeButton(60, "📍 Teleportar para Hospital", function()
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-200, 5, 300)
-	end
+local running = false
+
+speedBtn.MouseButton1Click:Connect(function()
+    running = not running
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = running and 50 or 16
+    end
+    speedBtn.Text = running and "Desativar velocidade" or "Ativar velocidade"
 end)
 
--- ESP
-local espBtn = makeButton(110, "👀 Ativar ESP (NomexCargo)", function()
-	espOn = not espOn
-	espBtn.Text = espOn and "❌ Desativar ESP" or "👀 Ativar ESP (NomexCargo)"
-end)
+-- Exemplo de botão extra: pulo alto
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Parent = frame
+jumpBtn.Position = UDim2.new(0, 20, 0, 110)
+jumpBtn.Size = UDim2.new(0, 260, 0, 40)
+jumpBtn.Text = "Ativar pulo alto"
+jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpBtn.Font = Enum.Font.Gotham
+jumpBtn.TextSize = 16
 
--- Velocidade
-local speedBtn = makeButton(160, "🏃 Aumentar velocidade", function()
-	speedOn = not speedOn
-	speedBtn.Text = speedOn and "❌ Resetar velocidade" or "🏃 Aumentar velocidade"
-	local hum = getHumanoid()
-	if hum then hum.WalkSpeed = speedOn and 40 or 16 end
-end)
+local jumpOn = false
 
--- Noclip
-local noclipBtn = makeButton(210, "🚶 Ativar Noclip", function()
-	noclipOn = not noclipOn
-	noclipBtn.Text = noclipOn and "❌ Desativar Noclip" or "🚶 Ativar Noclip"
-end)
-
--- Invisibilidade
-local invisBtn = makeButton(260, "👻 Ativar Invisibilidade", function()
-	invisOn = not invisOn
-	invisBtn.Text = invisOn and "❌ Desativar Invisibilidade" or "👻 Ativar Invisibilidade"
-	if LocalPlayer.Character then setTransparencyForCharacter(LocalPlayer.Character, invisOn and 1 or 0) end
-end)
-
--- Pulo alto
-local jumpBtn = makeButton(310, "⬆️ Ativar Pulo Alto", function()
-	highJumpOn = not highJumpOn
-	jumpBtn.Text = highJumpOn and "❌ Desativar Pulo Alto" or "⬆️ Ativar Pulo Alto"
-	local hum = getHumanoid()
-	if hum then hum.JumpPower = highJumpOn and 100 or 50 end
-end)
-
-makeButton(360, "🔄 Resetar Personagem", function()
-	if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
-end)
-
--- Noclip loop contínuo
-RunService.Stepped:Connect(function()
-	if noclipOn and LocalPlayer.Character then
-		for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = false
-			end
-		end
-	end
-end)
-
--- ESP otimizado
-local espTags = {}
-RunService.RenderStepped:Connect(function()
-	if not espOn then
-		for p, tag in pairs(espTags) do
-			if tag and tag.Parent then tag:Destroy() end
-			espTags[p] = nil
-		end
-	else
-		for _, p in pairs(Players:GetPlayers()) do
-			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Team then
-				if not espTags[p] then
-					local guiTag = Instance.new("BillboardGui", p.Character.Head)
-					guiTag.Name = "TeamESP"
-					guiTag.Size = UDim2.new(0, 100, 0, 30)
-					guiTag.StudsOffset = Vector3.new(0, 2, 0)
-					guiTag.AlwaysOnTop = true
-					local label = Instance.new("TextLabel", guiTag)
-					label.Size = UDim2.new(1, 0, 1, 0)
-					label.BackgroundTransparency = 1
-					label.TextColor3 = Color3.fromRGB(0, 255, 255)
-					label.Font = Enum.Font.GothamBold
-					label.TextSize = 14
-					label.Text = p.Name .. " [" .. p.Team.Name .. "]"
-					espTags[p] = guiTag
-				end
-			elseif espTags[p] then
-				if espTags[p].Parent then espTags[p]:Destroy() end
-				espTags[p] = nil
-			end
-		end
-	end
+jumpBtn.MouseButton1Click:Connect(function()
+    jumpOn = not jumpOn
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.JumpPower = jumpOn and 100 or 50
+    end
+    jumpBtn.Text = jumpOn and "Desativar pulo alto" or "Ativar pulo alto"
 end)
