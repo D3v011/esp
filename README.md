@@ -1,18 +1,15 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- GUI principal
+-- Criação da GUI principal
 local gui = Instance.new("ScreenGui")
-gui.Name = "PainelModMenuArrastavel"
-gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+gui.Name = "PainelModMenu"
+gui.Parent = LocalPlayer.PlayerGui
 
--- Painel principal arrastável
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 120)
-frame.Position = UDim2.new(0.5, -150, 0.5, -60)
+frame.Size = UDim2.new(0, 300, 0, 180)
+frame.Position = UDim2.new(0.5, -150, 0.5, -90)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-frame.Active = true
-frame.Draggable = true -- painel arrastável
 frame.Parent = gui
 
 local UICorner = Instance.new("UICorner")
@@ -23,7 +20,7 @@ local title = Instance.new("TextLabel")
 title.Parent = frame
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "🔥 MOD MENU 🔥"
+title.Text = "🔥 MOD MENU COMPLETO 🔥"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
@@ -62,4 +59,26 @@ speedBtn.MouseButton1Click:Connect(function()
         humanoid.WalkSpeed = running and 50 or 16
     end
     speedBtn.Text = running and "Desativar velocidade" or "Ativar velocidade"
+end)
+
+-- Exemplo de botão extra: pulo alto
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Parent = frame
+jumpBtn.Position = UDim2.new(0, 20, 0, 110)
+jumpBtn.Size = UDim2.new(0, 260, 0, 40)
+jumpBtn.Text = "Ativar pulo alto"
+jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpBtn.Font = Enum.Font.Gotham
+jumpBtn.TextSize = 16
+
+local jumpOn = false
+
+jumpBtn.MouseButton1Click:Connect(function()
+    jumpOn = not jumpOn
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.JumpPower = jumpOn and 100 or 50
+    end
+    jumpBtn.Text = jumpOn and "Desativar pulo alto" or "Ativar pulo alto"
 end)
