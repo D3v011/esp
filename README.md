@@ -1,161 +1,121 @@
+-- Painel Mod Menu RP (Menu Flutuante com vantagens discretas) por ChatGPT
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- GUI BASE
+-- Cria GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "PainelRPv3"
+gui.Name = "ModMenuRP"
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 270, 0, 370)
-frame.Position = UDim2.new(0, 10, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BorderSizePixel = 0
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 300, 0, 350)
+main.Position = UDim2.new(0.5, -150, 0.5, -175)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+main.BorderSizePixel = 0
+main.Visible = true
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 30)
-title.Text = "Painel RP 🔍"
+local UICorner = Instance.new("UICorner", main)
+UICorner.CornerRadius = UDim.new(0, 10)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "🔥 MOD MENU RP 🔥"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
-title.BackgroundTransparency = 1
 
--- FILTRO DE CARGO
-local check = Instance.new("TextButton", frame)
-check.Size = UDim2.new(1, -10, 0, 25)
-check.Position = UDim2.new(0, 5, 0, 35)
-check.BackgroundColor3 = Color3.fromRGB(35,35,35)
-check.TextColor3 = Color3.fromRGB(255,255,255)
-check.Font = Enum.Font.Gotham
-check.TextSize = 13
-check.Text = "Filtro: cargos OFF"
-local filtrarCargos = false
-
-check.MouseButton1Click:Connect(function()
-	filtrarCargos = not filtrarCargos
-	check.Text = filtrarCargos and "Filtro: cargos ON" or "Filtro: cargos OFF"
+-- Fechar botão
+local close = Instance.new("TextButton", main)
+close.Size = UDim2.new(0, 30, 0, 30)
+close.Position = UDim2.new(1, -35, 0, 5)
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(255, 0, 0)
+close.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 14
+close.MouseButton1Click:Connect(function()
+	gui:Destroy()
 end)
 
--- LISTA DE JOGADORES
-local listFrame = Instance.new("ScrollingFrame", frame)
-listFrame.Position = UDim2.new(0, 0, 0, 65)
-listFrame.Size = UDim2.new(1, 0, 0, 140)
-listFrame.CanvasSize = UDim2.new(0, 0, 4, 0)
-listFrame.BackgroundTransparency = 1
-listFrame.ScrollBarThickness = 6
+-- Teleporte
+local teleBtn = Instance.new("TextButton", main)
+teleBtn.Position = UDim2.new(0, 20, 0, 60)
+teleBtn.Size = UDim2.new(0, 260, 0, 35)
+teleBtn.Text = "📍 Teleportar para Hospital"
+teleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+teleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleBtn.Font = Enum.Font.Gotham
+teleBtn.TextSize = 14
+teleBtn.MouseButton1Click:Connect(function()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-200, 5, 300)
+	end
+end)
 
--- LOCAIS IMPORTANTES (você pode editar os vetores conforme seu mapa)
-local locais = {
-	["Delegacia"] = Vector3.new(100, 5, 100),
-	["Hospital"] = Vector3.new(-200, 5, 300),
-	["Loja de Armas"] = Vector3.new(150, 5, -120),
-	["Praça Central"] = Vector3.new(0, 5, 0),
-}
+-- ESP toggle
+local espOn = false
+local espBtn = Instance.new("TextButton", main)
+espBtn.Position = UDim2.new(0, 20, 0, 110)
+espBtn.Size = UDim2.new(0, 260, 0, 35)
+espBtn.Text = "👀 Ativar ESP (NomexCargo)"
+espBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+espBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+espBtn.Font = Enum.Font.Gotham
+espBtn.TextSize = 14
 
--- FRAME DE LOCAIS
-local locaisFrame = Instance.new("Frame", frame)
-locaisFrame.Position = UDim2.new(0, 0, 0, 210)
-locaisFrame.Size = UDim2.new(1, 0, 0, 150)
-locaisFrame.BackgroundTransparency = 1
+local espTags = {}
 
-local locaisLabel = Instance.new("TextLabel", locaisFrame)
-locaisLabel.Size = UDim2.new(1, 0, 0, 20)
-locaisLabel.Text = "📍 Locais Importantes"
-locaisLabel.Font = Enum.Font.GothamBold
-locaisLabel.TextColor3 = Color3.fromRGB(255,255,255)
-locaisLabel.TextSize = 14
-locaisLabel.BackgroundTransparency = 1
+espBtn.MouseButton1Click:Connect(function()
+	espOn = not espOn
+	espBtn.Text = espOn and "❌ Desativar ESP" or "👀 Ativar ESP (NomexCargo)"
+	if not espOn then
+		for _, tag in pairs(espTags) do if tag and tag.Parent then tag:Destroy() end end
+		espTags = {}
+	end
+end)
 
-local y = 25
-for nome, pos in pairs(locais) do
-	local btn = Instance.new("TextButton", locaisFrame)
-	btn.Size = UDim2.new(1, -10, 0, 25)
-	btn.Position = UDim2.new(0, 5, 0, y)
-	btn.Text = nome
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
-	btn.Font = Enum.Font.Gotham
-	btn.TextSize = 13
+-- Velocidade
+local speedBtn = Instance.new("TextButton", main)
+speedBtn.Position = UDim2.new(0, 20, 0, 160)
+speedBtn.Size = UDim2.new(0, 260, 0, 35)
+speedBtn.Text = "🏃 Aumentar velocidade"
+speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedBtn.Font = Enum.Font.Gotham
+speedBtn.TextSize = 14
 
-	btn.MouseButton1Click:Connect(function()
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
-		end
-	end)
+speedBtn.MouseButton1Click:Connect(function()
+	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.WalkSpeed = 40
+	end
+end)
 
-	y = y + 30
-end
-
-locaisFrame.CanvasSize = UDim2.new(0, 0, 0, y)
-
--- ATUALIZA JOGADORES
-function atualizarJogadores()
-	listFrame:ClearAllChildren()
-	local y = 0
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local distancia = math.floor((player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
-			local cargo = player.Team and player.Team.Name or "Sem time"
-
-			-- Adiciona tag flutuante em cima da cabeça
-			if player.Character:FindFirstChild("Head") and not player.Character.Head:FindFirstChild("TimeTag") then
-				local guiTag = Instance.new("BillboardGui", player.Character.Head)
-				guiTag.Name = "TimeTag"
-				guiTag.Size = UDim2.new(0, 100, 0, 30)
-				guiTag.StudsOffset = Vector3.new(0, 2, 0)
-				guiTag.AlwaysOnTop = true
-
-				local texto = Instance.new("TextLabel", guiTag)
-				texto.Size = UDim2.new(1, 0, 1, 0)
-				texto.BackgroundTransparency = 1
-				texto.TextColor3 = Color3.fromRGB(0, 255, 255)
-				texto.Font = Enum.Font.GothamBold
-				texto.TextSize = 14
-				texto.Text = cargo
-			end
-
-			if not filtrarCargos or (cargo ~= "Sem time") then
-				local texto = player.Name .. " | " .. distancia .. "m - [" .. cargo .. "]"
-
-				local label = Instance.new("TextLabel", listFrame)
-				label.Position = UDim2.new(0, 0, 0, y)
-				label.Size = UDim2.new(1, -10, 0, 25)
-				label.BackgroundTransparency = 1
-				label.TextColor3 = Color3.fromRGB(200, 200, 200)
-				label.Font = Enum.Font.Gotham
-				label.TextSize = 14
-				label.Text = texto
-				y = y + 26
+-- Loop ESP
+RunService.RenderStepped:Connect(function()
+	if espOn then
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Team then
+				if not espTags[p] then
+					local guiTag = Instance.new("BillboardGui", p.Character.Head)
+					guiTag.Name = "TeamESP"
+					guiTag.Size = UDim2.new(0, 100, 0, 30)
+					guiTag.StudsOffset = Vector3.new(0, 2, 0)
+					guiTag.AlwaysOnTop = true
+					local label = Instance.new("TextLabel", guiTag)
+					label.Size = UDim2.new(1, 0, 1, 0)
+					label.BackgroundTransparency = 1
+					label.TextColor3 = Color3.fromRGB(0, 255, 255)
+					label.Font = Enum.Font.GothamBold
+					label.TextSize = 14
+					label.Text = p.Name .. " [" .. p.Team.Name .. "]"
+					espTags[p] = guiTag
+				end
 			end
 		end
 	end
-
-	listFrame.CanvasSize = UDim2.new(0, 0, 0, y)
-end
-
--- NOTIFICAÇÕES DE ENTRADA/SAÍDA
-Players.PlayerAdded:Connect(function(p)
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "Entrou",
-		Text = p.Name .. " conectou-se.",
-		Duration = 4
-	})
-end)
-
-Players.PlayerRemoving:Connect(function(p)
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "Saiu",
-		Text = p.Name .. " saiu.",
-		Duration = 4
-	})
-end)
-
--- LOOP
-RunService.RenderStepped:Connect(function()
-	pcall(function()
-		atualizarJogadores()
-	end)
 end)
