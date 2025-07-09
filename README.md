@@ -1,68 +1,77 @@
--- Lista enorme de possíveis RemoteEvents para recompensas e dinheiro, especialmente para jogos de RP
-local possibleEvents = {
-    -- Recompensas gerais
-    "RedEvent", "RewardEvent", "GetReward", "ClaimReward", "GiveReward", "RemoteEvent",
-    "CollectReward", "GiftEvent", "PrizeEvent", "RewardRemote", "DailyReward", "DailyGift",
-    "Reward", "Rewards", "RewardHandler", "RewardSystem", "RewardTrigger", "SpecialReward",
-    "SecretReward", "Reward4", "EventReward", "Rewarded", "RedeemReward", "RewardCode",
-    "RewardClaim", "AwardReward", "GivePrize", "ClaimPrize", "PrizeRemote", "GiftRemote",
-    "CodeReward", "VIPReward", "LoginReward", "RewardEventHandler", "RewardDispenser",
-    "ChestReward", "BoxReward", "SpinReward", "SpinEvent", "SpinPrize", "SpinTheWheel",
-    "WheelReward", "WheelEvent", "LootReward", "LootEvent", "CrateReward", "CrateEvent",
-    "PresentReward", "PresentEvent", "GiftClaim", "GiftReceive", "PromoReward", "PromoEvent",
-    "PromoCodeReward", "PromoCodeEvent", "RewardButton", "RewardTriggerEvent", "RewardPush",
-    "RewardRemoteEvent", "RewardFire", "RewardActivate", "RewardGrant", "CollectPrize",
-    "RewardCollect", "RewardCollection", "RewardTaker", "RewardGiver", "AwardEvent",
-    "AwardRemote", "TrophyReward", "TrophyEvent", "MedalReward", "MedalEvent", "RankReward",
-    -- Dinheiro, moedas, cash, gems, etc.
-    "CashReward", "CoinReward", "GemReward", "DiamondReward", "TokenReward", "CurrencyReward",
-    "MoneyReward", "MoneyEvent", "MoneyRemote", "GiveMoney", "MoneyHandler", "AddMoney",
-    "GiveCash", "CashEvent", "CashRemote", "CashHandler", "AddCash", "CashoutEvent",
-    "AddCoins", "GiveCoins", "CoinEvent", "CoinRemote", "CoinHandler", "AddGems",
-    "GiveGems", "GemsEvent", "GemsRemote", "GemsHandler", "AddDiamonds", "GiveDiamonds",
-    "DiamondsEvent", "DiamondsRemote", "DiamondsHandler", "GiveTokens", "TokensEvent",
-    "TokensRemote", "TokensHandler", "AddCurrency", "GiveCurrency", "CurrencyEvent",
-    "CurrencyRemote", "CurrencyHandler", "BalanceEvent", "WalletEvent", "BankEvent",
-    "DepositEvent", "WithdrawEvent", "PayoutEvent", "PayEvent", "EarnEvent", "PayReward",
-    "BankRemote", "WalletRemote", "DepositRemote", "WithdrawRemote", "PayoutRemote",
-    "PayRemote", "EarnRemote",
-    -- Termos em português comuns em RP
-    "DinheiroEvent", "DinheiroRemote", "DarDinheiro", "ReceberDinheiro", "RecompensaDinheiro",
-    "MoedaEvent", "MoedaRemote", "DarMoedas", "AdicionarMoedas", "MoedasHandler",
-    "AdicionarDinheiro", "ReceberMoedas", "DarCash", "AdicionarCash", "CashHandlerBR",
-    -- RP: Empregos, salários, carteira, banco, pagamento
-    "BankSystem", "BankService", "BankTransfer", "BankDeposit", "BankWithdraw", "PaySalary",
-    "SalaryEvent", "SalaryRemote", "DailySalary", "PagarSalario", "ReceberSalario",
-    "EmpregoPagar", "EmpregoReceber", "JobPay", "JobPayment", "JobReward", "JobEvent",
-    "WorkReward", "WorkPay", "WorkEvent", "TrabalhoPagar", "TrabalhoReceber", "CarteiraEvent",
-    "CarteiraRemote", "CarteiraVirtual", "CriarContaBancaria", "ContaBancariaRemote",
-    "CartaoBancario", "CartaoRemote", "TransferirDinheiro", "TransferMoney", "ATMEvent",
-    "ATMRemote", "PixEvent", "PixRemote", "ReceberPix", "EnviarPix", "ChequeEvent", "ChequeRemote",
-    -- Extras que podem ser usados
-    "DepositMoney", "WithdrawMoney", "GetMoney", "SetMoney", "BankBalance", "UpdateBalance",
-    "AtualizarSaldo", "SaldoEvent", "SaldoRemote", "PagarConta", "PagarTaxa", "PagarMulta",
-    "MultaEvent", "TaxEvent", "ReceberPremio", "PremioEvent", "PremioRemote"
-}
+-- GUI básica
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local FarmButton = Instance.new("TextButton")
+local running = false
 
--- Argumentos genéricos para todos os eventos (ajuste conforme necessário)
-local args = {
-    [1] = {
-        ["\3"] = {
-            [1] = {
-                [1] = "Reward4"
-            }
-        }
-    },
-    [2] = {}
-}
+ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.5, -100, 0.7, -50)
+Frame.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
+Frame.Parent = ScreenGui
 
-game:GetService("RunService").Stepped:Connect(function()
-    for _, eventName in ipairs(possibleEvents) do
-        local remote = game:GetService("ReplicatedStorage"):FindFirstChild(eventName)
-        if remote and remote:IsA("RemoteEvent") then
-            pcall(function()
-                remote:FireServer(unpack(args))
-            end)
+FarmButton.Text = "INICIAR FARM GARI"
+FarmButton.Size = UDim2.new(0, 180, 0, 60)
+FarmButton.Position = UDim2.new(0, 10, 0, 20)
+FarmButton.BackgroundColor3 = Color3.new(0,1,0)
+FarmButton.TextColor3 = Color3.new(1,1,1)
+FarmButton.Parent = Frame
+
+-- Função para buscar objetos com nomes parecidos
+local function findObjectByName(keywords)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("Model") then
+            for _, word in ipairs(keywords) do
+                if string.lower(obj.Name):find(word) then
+                    return obj
+                end
+            end
         end
+    end
+    return nil
+end
+
+-- Função principal de farm
+function farmGari()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    -- Procurar objetos prováveis de lixo e lixeira
+    local lixoKeywords = {"lixo", "garbage", "trash", "bag", "saco"}
+    local lixeiraKeywords = {"lixeira", "bin", "trashcan", "coletor"}
+    while running do
+        local lixo = findObjectByName(lixoKeywords)
+        local lixeira = findObjectByName(lixeiraKeywords)
+        if lixo and lixeira then
+            -- Ir até o lixo
+            char:MoveTo(lixo.Position or lixo.PrimaryPart.Position)
+            repeat wait(0.1) until (char.PrimaryPart.Position - (lixo.Position or lixo.PrimaryPart.Position)).magnitude < 5 or not running
+            pcall(function()
+                firetouchinterest(char.PrimaryPart, lixo, 0)
+            end)
+            wait(0.3)
+            -- Ir até a lixeira
+            char:MoveTo(lixeira.Position or lixeira.PrimaryPart.Position)
+            repeat wait(0.1) until (char.PrimaryPart.Position - (lixeira.Position or lixeira.PrimaryPart.Position)).magnitude < 5 or not running
+            pcall(function()
+                firetouchinterest(char.PrimaryPart, lixeira, 0)
+            end)
+            wait(1)
+        else
+            warn("Não encontrou lixo ou lixeira!")
+            wait(2)
+        end
+    end
+end
+
+-- Botão de ativação/desativação
+FarmButton.MouseButton1Click:Connect(function()
+    running = not running
+    if running then
+        FarmButton.Text = "PARAR FARM"
+        FarmButton.BackgroundColor3 = Color3.new(1,0,0)
+        farmGari()
+    else
+        FarmButton.Text = "INICIAR FARM GARI"
+        FarmButton.BackgroundColor3 = Color3.new(0,1,0)
     end
 end)
