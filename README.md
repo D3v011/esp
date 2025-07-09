@@ -1,84 +1,108 @@
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Criação da GUI principal
-local gui = Instance.new("ScreenGui")
-gui.Name = "PainelModMenu"
-gui.Parent = LocalPlayer.PlayerGui
+-- Criar GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "ScannerGUI"
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 180)
-frame.Position = UDim2.new(0.5, -150, 0.5, -90)
-frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-frame.Parent = gui
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 450, 0, 400)
+frame.Position = UDim2.new(0.5, -225, 0.5, -200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.BorderSizePixel = 0
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = frame
-
-local title = Instance.new("TextLabel")
-title.Parent = frame
-title.Size = UDim2.new(1, 0, 0, 35)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
-title.Text = "🔥 MOD MENU COMPLETO 🔥"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "🕵️ Scanner Automático de Dados"
+title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 16
+title.TextSize = 18
 
--- Botão fechar
-local closeButton = Instance.new("TextButton")
-closeButton.Parent = frame
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0, 5)
-closeButton.Text = "✕"
-closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 18
-closeButton.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
+local output = Instance.new("ScrollingFrame", frame)
+output.Size = UDim2.new(1, -20, 1, -50)
+output.Position = UDim2.new(0, 10, 0, 40)
+output.BackgroundColor3 = Color3.fromRGB(20,20,20)
+output.BorderSizePixel = 0
+output.CanvasSize = UDim2.new(0, 0, 3, 0)
+output.ScrollBarThickness = 6
 
--- Botão de velocidade
-local speedBtn = Instance.new("TextButton")
-speedBtn.Parent = frame
-speedBtn.Position = UDim2.new(0, 20, 0, 60)
-speedBtn.Size = UDim2.new(0, 260, 0, 40)
-speedBtn.Text = "Ativar velocidade"
-speedBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-speedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedBtn.Font = Enum.Font.Gotham
-speedBtn.TextSize = 16
+local layout = Instance.new("UIListLayout", output)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 4)
 
-local running = false
+-- Função para adicionar texto no output
+local function addText(text)
+	local label = Instance.new("TextLabel", output)
+	label.Size = UDim2.new(1, -10, 0, 20)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(200, 200, 200)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Text = text
+end
 
-speedBtn.MouseButton1Click:Connect(function()
-    running = not running
-    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = running and 50 or 16
-    end
-    speedBtn.Text = running and "Desativar velocidade" or "Ativar velocidade"
-end)
+-- Limpar output e começar scan
+output:ClearAllChildren()
+addText("Iniciando scan do jogo...")
 
--- Exemplo de botão extra: pulo alto
-local jumpBtn = Instance.new("TextButton")
-jumpBtn.Parent = frame
-jumpBtn.Position = UDim2.new(0, 20, 0, 110)
-jumpBtn.Size = UDim2.new(0, 260, 0, 40)
-jumpBtn.Text = "Ativar pulo alto"
-jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-jumpBtn.Font = Enum.Font.Gotham
-jumpBtn.TextSize = 16
+-- Scan jogadores e times
+addText("== Jogadores e Times ==")
+for _, player in pairs(Players:GetPlayers()) do
+	addText("Jogador: " .. player.Name)
+	if player.Team then
+		addText("  Time: " .. player.Team.Name)
+	else
+		addText("  Sem time")
+	end
+end
 
-local jumpOn = false
+-- Scan ferramentas dos jogadores
+addText("\n== Ferramentas na mochila ==")
+for _, player in pairs(Players:GetPlayers()) do
+	if player:FindFirstChild("Backpack") then
+		local tools = player.Backpack:GetChildren()
+		if #tools == 0 then
+			addText("Player: " .. player.Name .. " não tem ferramentas.")
+		else
+			addText("Player: " .. player.Name)
+			for _, tool in pairs(tools) do
+				addText("  Item: " .. tool.Name .. " | Tipo: " .. tool.ClassName)
+			end
+		end
+	end
+end
 
-jumpBtn.MouseButton1Click:Connect(function()
-    jumpOn = not jumpOn
-    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.JumpPower = jumpOn and 100 or 50
-    end
-    jumpBtn.Text = jumpOn and "Desativar pulo alto" or "Ativar pulo alto"
+-- Scan objetos no workspace
+addText("\n== Objetos no Workspace ==")
+for _, obj in pairs(Workspace:GetChildren()) do
+	addText("Objeto: " .. obj.Name .. " | Tipo: " .. obj.ClassName)
+end
+
+-- Scan posições dos jogadores (distância local)
+addText("\n== Posições dos Jogadores ==")
+local lpPos = nil
+if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+	lpPos = LocalPlayer.Character.HumanoidRootPart.Position
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and lpPos then
+		local dist = (player.Character.HumanoidRootPart.Position - lpPos).Magnitude
+		addText(player.Name .. " está a " .. math.floor(dist) .. " metros")
+	end
+end
+
+-- Ajustar canvas
+RunService.RenderStepped:Connect(function()
+	local totalHeight = 0
+	for _, child in pairs(output:GetChildren()) do
+		if child:IsA("TextLabel") then
+			totalHeight = totalHeight + child.Size.Y.Offset + layout.Padding.Offset
+		end
+	end
+	output.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 end)
