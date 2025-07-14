@@ -23,7 +23,7 @@ UICorner.CornerRadius = UDim.new(0, 10)
 
 -- Título
 local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Size = UDim2.new(1, -40, 0, 40)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "📌 Trocar de Time"
@@ -43,13 +43,11 @@ closeBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 16
 closeBtn.AutoButtonColor = true
-closeBtn.Parent = frame
-closeBtn.ZIndex = 2
 closeBtn.MouseButton1Click:Connect(function()
 	gui:Destroy()
 end)
 
--- Área com scroll
+-- Área com scroll para botões
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1, 0, 1, -40)
 scroll.Position = UDim2.new(0, 0, 0, 40)
@@ -61,8 +59,6 @@ scroll.BorderSizePixel = 0
 local layout = Instance.new("UIListLayout", scroll)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Padding = UDim.new(0, 5)
-
-scroll.Parent = frame
 
 -- Função para mudar de time
 local function mudarTime(time)
@@ -100,7 +96,9 @@ for _, team in ipairs(Teams:GetChildren()) do
 	end
 end
 
--- Atualiza o tamanho da rolagem
+-- Atualizar CanvasSize para scroll funcionar corretamente
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 end)
+
+scroll.Parent = frame
